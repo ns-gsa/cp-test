@@ -23,6 +23,7 @@ jobs:
         run: git fetch origin production:production
 
       - name: Cherry-pick production commit
+        id: cherry-pick
         run: |
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git config user.name "${GITHUB_ACTOR}"
@@ -36,6 +37,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
 
       - name: Push Cherry-pick commit to a new branch
+        id: cherry-pick-push
         if: steps.cherry-pick.outputs.result == 'cherry-pick-success'
         run: |
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
@@ -46,7 +48,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
 
       - name: Create Pull Request new branch to master
-        if: steps.cherry-pick.outputs.result == 'cherry-pick-push-success'
+        if: steps.cherry-pick-push.outputs.result == 'cherry-pick-push-success'
         id: create_pr
         uses: peter-evans/create-pull-request@v3
         with:
