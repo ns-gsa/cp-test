@@ -38,3 +38,17 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
+
+      - name: Create Pull Request new branch to master
+        id: create_pr
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.CP_TEST_PAT }}
+          branch: cherry-pick-${{ github.run_id }}
+          base: master
+          title: "Cherry-pick PR #${{ github.event.pull_request.number }} to master"
+          body: |
+            Automatically cherry-picked from production to master.
+            Original PR: #${{ github.event.pull_request.number }}
+          labels: |
+            cherry-pick-production-master-pr
