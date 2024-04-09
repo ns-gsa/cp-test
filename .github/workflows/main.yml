@@ -1,0 +1,40 @@
+name: Cherry-Pick Commits to Master (does not push anything to master)
+
+on:
+  pull_request:
+    branches:
+      - production
+    types: [closed]
+
+jobs:
+  cherry-pick:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.ref != 'master' &&
+      github.event.pull_request.base.ref == 'production'
+    steps:
+      - name: Checkout master code
+        uses: actions/checkout@v2
+        with:
+          ref: 'master'
+
+      - name: Fetch latest production changes
+        run: git fetch origin production:production
+
+      - name: Cherry-pick production commit to a new branch
+        run: |
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git config user.name "${GITHUB_ACTOR}"
+          git checkout -b cherry-pick-${{ github.run_id }}
+          if git cherry-pick ${{ github.event.pull_request.merge_commit_sha }}; then
+            if git push origin cherry-pick-${{ github.run_id }}; then
+              echo "::set-output name=result::cherry-pick-success"
+            else
+              echo "::set-output name=result::cherry-pick-push-failure"
+            fi
+          else
+            echo "::set-output name=result::cherry-pick-failure"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
