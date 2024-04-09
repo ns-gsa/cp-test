@@ -28,10 +28,16 @@ jobs:
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git config user.name "${GITHUB_ACTOR}"
           git checkout -b cherry-pick-${{ github.run_id }}
+          MERGE_COMMIT_SHA=${{ github.event.pull_request.merge_commit_sha }}
+          echo "Merge commit SHA: $MERGE_COMMIT_SHA"
           if git cherry-pick ${{ github.event.pull_request.merge_commit_sha }}; then
               echo "::set-output name=result::cherry-pick-success"
+              echo "Cherry-pick successful. Details of the merge commit:"
+              git show --name-only $MERGE_COMMIT_SHA
           else
               echo "::set-output name=result::cherry-pick-failure"
+              echo "Failed to cherry-pick. Attempting to show details of the merge commit anyway:"
+              git show --name-only $MERGE_COMMIT_SHA || echo "Unable to show merge commit details."
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
