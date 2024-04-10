@@ -25,62 +25,36 @@ jobs:
       - name: Fetch latest production changes
         run: git fetch origin production:production
 
-      - name: Cherry-pick production commit
+      - name: Create cherry-pick branch
+        run: |
+          git checkout -b cherry-pick-${{ github.run_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
+
+      - name: Push cherry-pick branch
+        run: |
+          git push -u origin cherry-pick-${{ github.run_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
+
+      - name: Checkout master branch
+        uses: actions/checkout@v2
+        with:
+          ref: master
+
+      - name: Checkout cherry-pick branch
+        uses: actions/checkout@v2
+        with:
+          ref: cherry-pick-${{ github.run_id }}
+
+      - name: Cherry-pick and push production commit
         id: cherry-pick
         run: |
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git config user.name "${GITHUB_ACTOR}"
-          git checkout -b cherry-pick-${{ github.run_id }}
-          echo "Git status:"
-          git status
-          echo "Last 5 commits:"
-          git log --oneline -5
-          echo "Remote configuration:"
-          git remote -v
-          echo "Branches:"
-          git branch -avv
-          MERGE_COMMIT_SHA=${{ github.event.pull_request.merge_commit_sha }}
-          echo "Merge commit SHA: $MERGE_COMMIT_SHA"
-          if git cherry-pick ${{ github.event.pull_request.merge_commit_sha }}; then
-              echo "::set-output name=result::cherry-pick-success"
-              echo "Git status:"
-              git status
-              echo "Last 5 commits:"
-              git log --oneline -5
-              echo "Remote configuration:"
-              git remote -v
-              echo "Branches:"
-              git branch -avv
-          else
-              echo "::set-output name=result::cherry-pick-failure"
-              echo "Failed to cherry-pick. Attempting to show details of the merge commit anyway:"
-              git show --name-only $MERGE_COMMIT_SHA || echo "Unable to show merge commit details."
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
-
-      - name: Push Cherry-pick commit to a new branch
-        id: cherry-pick-push
-        if: steps.cherry-pick.outputs.result == 'cherry-pick-success'
-        run: |
-              echo "Git status:"
-              git status
-              echo "Last 5 commits:"
-              git log --oneline -5
-              echo "Remote configuration:"
-              git remote -v
-              echo "Branches:"
-              git branch -avv
-              git push -u origin cherry-pick-${{ github.run_id }}
-              echo "Git status:"
-              git status
-              echo "Last 5 commits:"
-              git log --oneline -5
-              echo "Remote configuration:"
-              git remote -v
-              echo "Branches:"
-              git branch -avv
-              echo "::set-output name=result::cherry-pick-push-success"
+          git cherry-pick ${{ github.event.pull_request.merge_commit_sha }}
+          git push -u origin cherry-pick-${{ github.run_id }}
+          echo "::set-output name=result::cherry-pick-push-success"
         env:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
 
