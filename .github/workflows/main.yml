@@ -72,6 +72,14 @@ jobs:
               echo "Branches:"
               git branch -avv
               git push -u origin cherry-pick-${{ github.run_id }}
+              echo "Git status:"
+              git status
+              echo "Last 5 commits:"
+              git log --oneline -5
+              echo "Remote configuration:"
+              git remote -v
+              echo "Branches:"
+              git branch -avv
               echo "::set-output name=result::cherry-pick-push-success"
         env:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
