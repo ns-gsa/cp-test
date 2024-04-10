@@ -61,8 +61,7 @@ jobs:
           gh pr create --title "Cherry-pick PR #${{ github.event.pull_request.number }} to master" \
                        --body "Automatically cherry-picked from production to master. Original PR: #${{ github.event.pull_request.number }}" \
                        --base master \
-                       --head cherry-pick-${{ github.run_id }} \
-                       --label "cherry-pick-production-master-pr"
+                       --head cherry-pick-${{ github.run_id }}
         env:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
 
