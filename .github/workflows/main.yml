@@ -71,7 +71,7 @@ jobs:
                        --body "Automatically cherry-picked from production to master. Original PR: #${{ github.event.pull_request.number }}" \
                        --base master \
                        --head cherry-pick-${{ github.run_id }} \
-                       --repo ${{ github.repository }} --web)
+                       --repo ${{ github.repository }})
           echo "::set-output name=pr_link::$PR_URL"
         env:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
