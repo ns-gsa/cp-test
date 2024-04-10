@@ -14,9 +14,6 @@ jobs:
       github.event.pull_request.head.ref != 'master' &&
       github.event.pull_request.base.ref == 'production'
     steps:
-      - name: Check Git version
-        run: git --version
-
       - name: Checkout master code
         uses: actions/checkout@v2
         with:
@@ -59,7 +56,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
 
       - name: Create Pull Request new branch to master
-        if: steps.cherry-pick-push.outputs.result == 'cherry-pick-push-success'
+        if: steps.cherry-pick.outputs.result == 'cherry-pick-push-success'
         id: create_pr
         uses: peter-evans/create-pull-request@v3
         with:
