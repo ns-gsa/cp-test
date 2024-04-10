@@ -56,7 +56,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
 
       - name: Create Pull Request new branch to master
-        if: steps.cherry-pick-push.outputs.result == 'cherry-pick-push-success'
+        if: steps.cherry-pick.outputs.result == 'cherry-pick-push-success'
         run: |
           gh pr create --title "Cherry-pick PR #${{ github.event.pull_request.number }} to master" \
                        --body "Automatically cherry-picked from production to master. Original PR: #${{ github.event.pull_request.number }}" \
