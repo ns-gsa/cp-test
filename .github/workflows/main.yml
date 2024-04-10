@@ -50,14 +50,12 @@ jobs:
         id: cherry-pick-push
         if: steps.cherry-pick.outputs.result == 'cherry-pick-success'
         run: |
-          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-          git config user.name "${GITHUB_ACTOR}"
           echo "Preparing to push. Current branch and commit status:"
           git status
           git log --oneline -5
           git branch -avv
           echo "Pushing to origin..."
-          git push origin cherry-pick-${{ github.run_id }}
+          git push -u origin cherry-pick-${{ github.run_id }}
           echo "::set-output name=result::cherry-pick-push-success"
         env:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
