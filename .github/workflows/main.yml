@@ -55,9 +55,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
 
-      - name: Setup GitHub CLI
-        uses: actions/setup-cli@v1
-
       - name: Create Pull Request new branch to master
         if: steps.cherry-pick-push.outputs.result == 'cherry-pick-push-success'
         run: |
