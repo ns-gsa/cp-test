@@ -55,17 +55,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
 
+      - name: Setup GitHub CLI
+        uses: actions/setup-cli@v1
+
       - name: Create Pull Request new branch to master
-        if: steps.cherry-pick.outputs.result == 'cherry-pick-push-success'
-        id: create_pr
-        uses: peter-evans/create-pull-request@v3
-        with:
-          token: ${{ secrets.CP_TEST_PAT }}
-          branch: cherry-pick-${{ github.run_id }}
-          base: master
-          title: "Cherry-pick PR #${{ github.event.pull_request.number }} to master"
-          body: |
-            Automatically cherry-picked from production to master.
-            Original PR: #${{ github.event.pull_request.number }}
-          labels: |
-            cherry-pick-production-master-pr
+        if: steps.cherry-pick-push.outputs.result == 'cherry-pick-push-success'
+        run: |
+          gh pr create --title "Cherry-pick PR #${{ github.event.pull_request.number }} to master" \
+                       --body "Automatically cherry-picked from production to master. Original PR: #${{ github.event.pull_request.number }}" \
+                       --base master \
+                       --head cherry-pick-${{ github.run_id }} \
+                       --label "cherry-pick-production-master-pr"
+        env:
+          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
+
