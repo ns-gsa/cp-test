@@ -1,0 +1,66 @@
+name: Cherry-Pick Commits to Master (does not push anything to master)
+
+on:
+  pull_request:
+    branches:
+      - production
+    types: [closed]
+
+jobs:
+  cherry-pick:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.ref != 'master' &&
+      github.event.pull_request.base.ref == 'production'
+    steps:
+      - name: Checkout master code
+        uses: actions/checkout@v2
+        with:
+          ref: 'master'
+
+      - name: Fetch latest production changes
+        run: git fetch origin production:production
+
+      - name: Create cherry-pick branch
+        run: |
+          git checkout -b cherry-pick-${{ github.run_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
+
+      - name: Push cherry-pick branch
+        run: |
+          git push -u origin cherry-pick-${{ github.run_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
+
+      - name: Checkout master branch
+        uses: actions/checkout@v2
+        with:
+          ref: master
+
+      - name: Checkout cherry-pick branch
+        uses: actions/checkout@v2
+        with:
+          ref: cherry-pick-${{ github.run_id }}
+
+      - name: Cherry-pick and push production commit
+        id: cherry-pick
+        run: |
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git config user.name "${GITHUB_ACTOR}"
+          git cherry-pick ${{ github.event.pull_request.merge_commit_sha }}
+          git push -u origin cherry-pick-${{ github.run_id }}
+          echo "::set-output name=result::cherry-pick-push-success"
+        env:
+          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
+
+      - name: Create Pull Request new branch to master
+        if: steps.cherry-pick.outputs.result == 'cherry-pick-push-success'
+        run: |
+          gh pr create --title "Cherry-pick PR #${{ github.event.pull_request.number }} to master" \
+                       --body "Automatically cherry-picked from production to master. Original PR: #${{ github.event.pull_request.number }}" \
+                       --base master \
+                       --head cherry-pick-${{ github.run_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
