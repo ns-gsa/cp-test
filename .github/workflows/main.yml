@@ -67,6 +67,7 @@ jobs:
         id: create_pr
         if: steps.cherry-pick.outputs.result == 'push-success'
         run: |
+          git remote -v
           PR_URL=$(gh pr create --title "Cherry-pick PR #${{ github.event.pull_request.number }} to master" \
                        --body "Automatically cherry-picked from production to master. Original PR: #${{ github.event.pull_request.number }}" \
                        --base master \
