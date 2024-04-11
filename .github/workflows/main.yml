@@ -22,29 +22,6 @@ jobs:
       - name: Fetch latest production changes
         run: git fetch origin production:production
 
-      - name: Create cherry-pick branch
-        run: |
-          git checkout -b cherry-pick-${{ github.run_id }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
-
-      - name: Push cherry-pick branch
-        id: create-branch
-        run: |
-          git push -u origin cherry-pick-${{ github.run_id }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
-
-      - name: Checkout master branch
-        uses: actions/checkout@v2
-        with:
-          ref: master
-
-      - name: Checkout cherry-pick branch
-        uses: actions/checkout@v2
-        with:
-          ref: cherry-pick-${{ github.run_id }}
-
       - name: Cherry-pick and push production commit
         id: cherry-pick
         run: |
@@ -75,47 +52,3 @@ jobs:
           echo "::set-output name=pr_link::$PR_URL"
         env:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
-
-      - name: Send Slack Notification on success
-        if: steps.cherry-pick.outputs.result == 'push-success'
-        uses: slackapi/slack-github-action@v1.25.0
-        with:
-          channel-id: 'C06L9MGA231' #r113-deployment-discussion
-          slack-message: |
-            Cherry-pick succeeded :tada:
-            *For PR:* ${{ github.event.pull_request.title }} ${{ github.event.pull_request.html_url }}
-            *Creator:* ${{ github.event.pull_request.user.login }}
-            *Merged by:* ${{ github.event.pull_request.merged_by.login }}
-
-            *Auto cherry-pick PR:* ${{ steps.create_pr.outputs.pr_link }}
-            To complete cherry-pick to master, simply get approval for above PR and merge to master
-            
-            *Workflow Link:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            <@U03DPUY7TT4>
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
-
-      - name: Send Slack Notification on failure
-        if: (steps.cherry-pick.outputs.result == 'cherry-pick-failure') || (steps.cherry-pick.outputs.result == 'push-failure')
-        uses: slackapi/slack-github-action@v1.25.0
-        with:
-          channel-id: 'C06L9MGA231' #r113-deployment-discussion
-          slack-message: |
-            Cherry-pick failed :x:
-            *For PR:* ${{ github.event.pull_request.title }} ${{ github.event.pull_request.html_url }}
-            *Creator:* ${{ github.event.pull_request.user.login }}
-            *Merged by:* ${{ github.event.pull_request.merged_by.login }}
-
-            *Could not auto create cherry-pick PR* 
-            
-            *Workflow Link:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            *How to Resolve:*
-            Follow https://netskope.atlassian.net/wiki/spaces/DO/pages/3901161500/Branching+Strategy+Guidelines+-+Deployments+Repo#Syncing-Production-to-Master-guide
-
-            <@U03DPUY7TT4>
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
-
-
