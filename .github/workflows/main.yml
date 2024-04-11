@@ -22,6 +22,29 @@ jobs:
       - name: Fetch latest production changes
         run: git fetch origin production:production
 
+      - name: Create cherry-pick branch
+        run: |
+          git checkout -b cherry-pick-${{ github.run_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
+
+      - name: Push cherry-pick branch
+        id: create-branch
+        run: |
+          git push -u origin cherry-pick-${{ github.run_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
+
+      - name: Checkout master branch
+        uses: actions/checkout@v2
+        with:
+          ref: master
+
+      - name: Checkout cherry-pick branch
+        uses: actions/checkout@v2
+        with:
+          ref: cherry-pick-${{ github.run_id }}
+
       - name: Cherry-pick and push production commit
         id: cherry-pick
         run: |
