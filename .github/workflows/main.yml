@@ -78,6 +78,9 @@ jobs:
           
           # Construct the PR link
           PR_LINK="$REPO_URL/compare/$BASE...$HEAD?expand=1&title=$TITLE&body=$BODY"
+
+          # Echo the PR link to the workflow log
+          echo "PR Link: $PR_LINK"
           
           echo "::set-output name=pr_link::$PR_LINK"
 
