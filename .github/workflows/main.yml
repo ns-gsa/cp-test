@@ -63,16 +63,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
         continue-on-error: true
 
-      - name: Create Pull Request new branch to master
-        id: create_pr
-        if: steps.cherry-pick.outputs.result == 'push-success'
+      - name: Generate PR Link
+        id: generate_pr_link
         run: |
-          git remote -v
-          PR_URL=$(gh pr create --title "Cherry-pick PR #${{ github.event.pull_request.number }} to master" \
-                       --body "Automatically cherry-picked from production to master. Original PR: #${{ github.event.pull_request.number }}" \
-                       --base master \
-                       --head cherry-pick-${{ github.run_id }} \
-                       --repo ${{ github.repository }})
-          echo "::set-output name=pr_link::$PR_URL"
-        env:
-          GITHUB_TOKEN: ${{ secrets.CP_TEST_PAT }}
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          SHA=${{ github.event.pull_request.merge_commit_sha }}
+          REPO_URL="https://github.com/${{ github.repository }}"
+          BASE="master"
+          HEAD="cherry-pick-${{ github.run_id }}" # Dynamically set based on the GitHub Actions run ID
+      
+          # URL encode the title and body
+          TITLE=$(echo -n "cherry pick $PR_NUMBER to master" | jq -sRr @uri)
+          BODY=$(echo -n "• Automatically cherry-picked SHA $SHA\n• Original Production branch PR: #$PR_NUMBER\n• [Link to the github workflow]($REPO_URL/actions/runs/${{ github.run_id }})" | jq -sRr @uri)
+          
+          # Construct the PR link
+          PR_LINK="$REPO_URL/compare/$BASE...$HEAD?expand=1&title=$TITLE&body=$BODY"
+          
+          echo "::set-output name=pr_link::$PR_LINK"
+
